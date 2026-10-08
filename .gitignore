@@ -1,0 +1,22 @@
+# Dependencies & Builds
+node_modules/
+dist/
+.output/
+.vite/
+
+# Agent protocols and internal orchestrator files (DO NOT COMMIT)
+.agents/
+.gemini/
+ARCHITECTURE_DIAGRAMS.md
+HOW_TO_USE_IN_ANY_PROJECT.md
+
+# Operating System files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Logs & Secrets
+*.log
+.env
+.env.*
+!.env.example
