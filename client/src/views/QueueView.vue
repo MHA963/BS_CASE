@@ -67,11 +67,21 @@ const priorities = ['All', 'High', 'Medium', 'Low'];
         </div>
 
         <router-link
+          v-if="authStore.isOperator"
           to="/create"
           class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors"
         >
           <PlusCircle class="w-4 h-4" />
           <span>Create Ticket</span>
+        </router-link>
+
+        <router-link
+          v-else-if="authStore.isManager"
+          to="/qc/TCK-1001"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-colors"
+        >
+          <Sparkles class="w-4 h-4" />
+          <span>Review Awaiting QC</span>
         </router-link>
       </div>
     </div>

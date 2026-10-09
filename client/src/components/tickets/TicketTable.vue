@@ -1,10 +1,11 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { useTicketStore } from '../../stores/tickets';
+import { useAuthStore } from '../../stores/auth';
 import StatusBadge from '../common/StatusBadge.vue';
 import PriorityBadge from '../common/PriorityBadge.vue';
 import ColorSwatchChip from '../common/ColorSwatchChip.vue';
-import { Sparkles, Send, Play, CheckCircle } from 'lucide-vue-next';
+import { Sparkles, Send, Play, CheckCircle, Lock } from 'lucide-vue-next';
 
 defineProps({
   tickets: {
@@ -15,6 +16,7 @@ defineProps({
 
 const router = useRouter();
 const ticketStore = useTicketStore();
+const authStore = useAuthStore();
 
 async function handleDispatch(ticketId) {
   await ticketStore.dispatchTicket(ticketId);
@@ -122,7 +124,7 @@ async function handleSimulate(ticketId, currentStatus) {
               </button>
 
               <router-link
-                v-if="ticket.status === 'Awaiting Review'"
+                v-if="ticket.status === 'Awaiting Review' && authStore.isManager"
                 :to="`/qc/${ticket.id}`"
                 class="px-2.5 py-1 rounded bg-amber-500 text-white font-bold text-[11px] hover:bg-amber-600 transition-colors flex items-center gap-1 shadow-2xs"
               >
@@ -130,8 +132,16 @@ async function handleSimulate(ticketId, currentStatus) {
                 <span>Review QC</span>
               </router-link>
 
+              <span
+                v-else-if="ticket.status === 'Awaiting Review' && authStore.isOperator"
+                class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1"
+              >
+                <Lock class="w-3 h-3" />
+                <span>Awaiting Mgr</span>
+              </span>
+
               <router-link
-                v-if="ticket.status === 'Completed'"
+                v-if="ticket.status === 'Completed' && authStore.isManager"
                 to="/library"
                 class="px-2 py-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-[11px] flex items-center gap-1"
               >

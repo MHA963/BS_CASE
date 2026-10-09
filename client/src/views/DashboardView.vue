@@ -51,11 +51,21 @@ onMounted(async () => {
 
       <div class="flex items-center gap-2.5">
         <router-link
+          v-if="authStore.isOperator"
           to="/create"
           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-colors"
         >
           <PlusCircle class="w-4 h-4" />
           <span>New Recolour Ticket</span>
+        </router-link>
+
+        <router-link
+          v-else-if="authStore.isManager"
+          to="/qc/TCK-1001"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition-colors"
+        >
+          <Sparkles class="w-4 h-4" />
+          <span>Clear QC Bottleneck</span>
         </router-link>
 
         <router-link

@@ -8,13 +8,12 @@ import PriorityBadge from '../common/PriorityBadge.vue';
 import ColorSwatchChip from '../common/ColorSwatchChip.vue';
 import {
   Clock,
-  ArrowRight,
   Send,
   Sparkles,
   Scissors,
-  Eye,
   CheckCircle,
-  Play
+  Play,
+  Lock
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -39,7 +38,6 @@ async function handleDispatch() {
 }
 
 async function handleSimulateProgress() {
-  // Advance status: Sent -> In Progress -> Awaiting Review
   if (props.ticket.status === 'Sent') {
     await ticketStore.simulatePartnerCompletion(props.ticket.id, 'In Progress');
   } else if (props.ticket.status === 'In Progress') {
@@ -132,9 +130,9 @@ async function handleSimulateProgress() {
           <span>Simulate</span>
         </button>
 
-        <!-- Review QC Button for Awaiting Review -->
+        <!-- Review QC Button (Only for Manager Role) -->
         <router-link
-          v-if="ticket.status === 'Awaiting Review'"
+          v-if="ticket.status === 'Awaiting Review' && authStore.isManager"
           :to="`/qc/${ticket.id}`"
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold transition-colors shadow-sm animate-pulse"
         >
@@ -142,9 +140,17 @@ async function handleSimulateProgress() {
           <span>Review QC</span>
         </router-link>
 
+        <span
+          v-else-if="ticket.status === 'Awaiting Review' && authStore.isOperator"
+          class="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1"
+        >
+          <Lock class="w-3 h-3" />
+          <span>Awaiting Manager</span>
+        </span>
+
         <!-- View Button for other states -->
         <router-link
-          v-if="ticket.status === 'Completed'"
+          v-if="ticket.status === 'Completed' && authStore.isManager"
           :to="`/library`"
           class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition-colors"
         >
