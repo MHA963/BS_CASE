@@ -1,7 +1,55 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const { getStore, saveStore, initialSeed } = require('../db');
 const { v4: uuidv4 } = require('uuid');
+
+// Configure Multer storage for uploaded reference swatches
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `pattern-${uniqueSuffix}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB limit
+});
+
+// POST upload pattern reference file
+router.post('/upload', upload.single('patternFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  const fileData = {
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    name: req.body.patternName || req.file.originalname.replace(/\.[^/.]+$/, ''),
+    size: (req.file.size / (1024 * 1024)).toFixed(2) + ' MB',
+    mimetype: req.file.mimetype,
+    url: `/api/assets/uploads/${req.file.filename}`,
+    isUploaded: true
+  };
+
+  res.json({
+    success: true,
+    message: 'Pattern reference file uploaded successfully',
+    data: fileData
+  });
+});
 
 // GET all tickets (with filters)
 router.get('/', (req, res) => {
@@ -95,7 +143,8 @@ router.post('/', (req, res) => {
     slaHours: null,
     history: [
       { timestamp: new Date().toISOString(), event: 'Ticket Created', user: 'Studio Operator' },
-      ...(dispatchImmediately ? [{ timestamp: new Date().toISOString(), event: `Dispatched to ${partner || 'Pixelz'} API`, user: 'Studio Operator' }] : [])
+      ...(patternAttachment ? [{ timestamp: new Date().toISOString(), event: `Attached AOP Swatch Reference: ${patternAttachment.name || patternAttachment.filename}`, user: 'Studio Operator' }] : []),
+      ...(dispatchImmediately ? [{ timestamp: new Date().toISOString(), event: `Dispatched to ${partner || 'Pixelz'} API with reference payloads`, user: 'Studio Operator' }] : [])
     ]
   };
 
@@ -118,7 +167,7 @@ router.post('/:id/dispatch', (req, res) => {
   ticket.sentAt = new Date().toISOString();
   ticket.history.push({
     timestamp: new Date().toISOString(),
-    event: `Dispatched to ${ticket.partner} API (Tracking SLA)`,
+    event: `Dispatched to ${ticket.partner} API with high-res shots and reference attachments`,
     user: 'Studio Operator'
   });
 

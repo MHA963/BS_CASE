@@ -24,6 +24,10 @@ app.use('/api/assets/recolour-case', express.static(recolourCasePath));
 const rootAssetsPath = path.join(__dirname, '../../');
 app.use('/api/assets/brand', express.static(rootAssetsPath));
 
+// Serve uploaded reference pattern files
+const uploadsPath = path.join(__dirname, '../../uploads');
+app.use('/api/assets/uploads', express.static(uploadsPath));
+
 // API Routes
 app.use('/api/tickets', ticketsRouter);
 app.use('/api/partners', partnersRouter);

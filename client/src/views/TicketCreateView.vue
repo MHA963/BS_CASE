@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTicketStore } from '../stores/tickets';
 import {
@@ -10,21 +10,27 @@ import {
   Check,
   Building2,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  UploadCloud,
+  FileImage,
+  X,
+  CheckCircle2,
+  Layers,
+  Image as ImageIcon
 } from 'lucide-vue-next';
 
 const router = useRouter();
 const ticketStore = useTicketStore();
 
 // Form State
-const styleNumber = ref('15377499');
-const styleName = ref('Fine Merino Knit Cardigan');
-const brand = ref('SELECTED HOMME');
+const styleNumber = ref('15377500');
+const styleName = ref('Fine Gauge Knit Dress');
+const brand = ref('SELECTED FEMME');
 const season = ref('AW26');
 const priority = ref('High');
 const partner = ref('Pixelz');
 const clippingPath = ref(true);
-const guidelineNotes = ref('Please be aware to keep clipping path for all pictures (but only 1 clipping path).');
+const guidelineNotes = ref('Please be aware to keep clipping path for all pictures (but only 1 clipping path). Fuchsia Fedora AOP Block Libre and Granita solid.');
 
 // Selected shots
 const selectedShots = ref([
@@ -49,6 +55,86 @@ const pantonePresets = [
 ];
 
 const selectedPreset = ref(pantonePresets[0]);
+
+// Attached AOP Reference Swatch State
+const attachedPattern = ref({
+  name: 'Block Libre Pattern',
+  filename: 'Block Libre.jpg',
+  ticketFolder: 'Ticket 1',
+  url: '/api/assets/recolour-case/Ticket 1/Block Libre.jpg',
+  size: '12.8 MB',
+  isUploaded: false
+});
+
+const isUploadingFile = ref(false);
+const fileInputRef = ref(null);
+
+// Studio Library Preset Swatches
+const studioPatternPresets = [
+  {
+    name: 'Block Libre (Case Spec 1 & 4)',
+    filename: 'Block Libre.jpg',
+    ticketFolder: 'Ticket 1',
+    url: '/api/assets/recolour-case/Ticket 1/Block Libre.jpg',
+    size: '12.8 MB'
+  },
+  {
+    name: 'DOTS CLOUD DANCER (Case Spec 2 & 3)',
+    filename: 'DOTS CLOUD DANCER.jpg',
+    ticketFolder: 'Ticket 2',
+    url: '/api/assets/recolour-case/Ticket 2/DOTS CLOUD DANCER.jpg',
+    size: '7.2 MB'
+  }
+];
+
+function selectPresetPattern(preset) {
+  attachedPattern.value = {
+    name: preset.name,
+    filename: preset.filename,
+    ticketFolder: preset.ticketFolder,
+    url: preset.url,
+    size: preset.size,
+    isUploaded: false
+  };
+}
+
+function removePattern() {
+  attachedPattern.value = null;
+}
+
+async function handleFileUpload(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  isUploadingFile.value = true;
+  const formData = new FormData();
+  formData.append('patternFile', file);
+  formData.append('patternName', file.name.replace(/\.[^/.]+$/, ''));
+
+  try {
+    const res = await fetch('/api/tickets/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data.success) {
+      attachedPattern.value = {
+        name: data.data.name,
+        filename: data.data.filename,
+        originalName: data.data.originalName,
+        url: data.data.url,
+        size: data.data.size,
+        isUploaded: true
+      };
+    } else {
+      alert('Upload failed: ' + data.message);
+    }
+  } catch (err) {
+    alert('Failed to upload pattern: ' + err.message);
+  } finally {
+    isUploadingFile.value = false;
+  }
+}
 
 function addColorway() {
   selectedColorways.value.push({
@@ -95,6 +181,7 @@ async function handleSubmit(dispatchImmediately = false) {
       guidelineNotes: guidelineNotes.value,
       shots: activeShots,
       colorways: selectedColorways.value,
+      patternAttachment: attachedPattern.value,
       dispatchImmediately
     });
 
@@ -120,7 +207,7 @@ async function handleSubmit(dispatchImmediately = false) {
         </router-link>
         <div>
           <h1 class="text-xl font-bold text-slate-900">Create Recolour Ticket</h1>
-          <p class="text-xs text-slate-500">Configure studio photoshoot work order for digital recolouring.</p>
+          <p class="text-xs text-slate-500">Configure photoshoot work order, attach AOP pattern assets, and dispatch to retouch partners.</p>
         </div>
       </div>
     </div>
@@ -225,7 +312,7 @@ async function handleSubmit(dispatchImmediately = false) {
         </div>
       </div>
 
-      <!-- Section 3: Target Colorways & Pantone Targets -->
+      <!-- Section 3: Target Colorways -->
       <div class="space-y-3 pt-4 border-t border-slate-100">
         <div class="flex items-center justify-between">
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">3. Target Pantone / AOP Colorways</h2>
@@ -280,9 +367,103 @@ async function handleSubmit(dispatchImmediately = false) {
         </div>
       </div>
 
-      <!-- Section 4: Partner, Priority & Clipping Path -->
+      <!-- Section 4: AOP Reference Asset Upload & Swatch Attachment -->
       <div class="space-y-4 pt-4 border-t border-slate-100">
-        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">4. Partner Dispatch & Clipping Rules</h2>
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <ImageIcon class="w-4 h-4 text-purple-600" />
+              4. AOP Pattern Reference Attachment (Sent to Partner)
+            </h2>
+            <p class="text-[11px] text-slate-500">
+              Attach the high-resolution pattern swatch (e.g. Block Libre.jpg) for the partner to render exact motif scale.
+            </p>
+          </div>
+        </div>
+
+        <!-- If Pattern is Attached -->
+        <div
+          v-if="attachedPattern"
+          class="p-4 rounded-xl bg-purple-50/60 border border-purple-200 flex items-center justify-between gap-4"
+        >
+          <div class="flex items-center gap-3.5">
+            <div class="w-14 h-14 rounded-lg bg-white border border-purple-200 overflow-hidden shrink-0 shadow-2xs">
+              <img :src="attachedPattern.url" :alt="attachedPattern.name" class="w-full h-full object-cover" />
+            </div>
+            <div class="flex flex-col">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-purple-950">{{ attachedPattern.name }}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900">
+                  {{ attachedPattern.filename }}
+                </span>
+              </div>
+              <span class="text-[11px] text-purple-700">
+                Size: {{ attachedPattern.size || '12.8 MB' }} &bull; Status: <strong class="text-emerald-700">Ready for Partner Dispatch Payload</strong>
+              </span>
+            </div>
+          </div>
+
+          <button
+            @click="removePattern"
+            type="button"
+            class="px-2.5 py-1.5 rounded-lg border border-purple-300 bg-white hover:bg-rose-50 text-rose-600 text-xs font-semibold transition-colors flex items-center gap-1"
+          >
+            <X class="w-3.5 h-3.5" />
+            <span>Remove</span>
+          </button>
+        </div>
+
+        <!-- Uploader & Studio Swatch Presets -->
+        <div v-else class="space-y-3">
+          <!-- File Input Dropzone -->
+          <div
+            @click="$refs.fileInputRef.click()"
+            class="p-6 border-2 border-dashed border-slate-300 hover:border-purple-500 rounded-2xl bg-slate-50/60 hover:bg-purple-50/30 cursor-pointer transition-all text-center space-y-2 group"
+          >
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              @change="handleFileUpload"
+              class="hidden"
+            />
+            <UploadCloud class="w-8 h-8 text-slate-400 group-hover:text-purple-600 mx-auto transition-colors" />
+            <div class="text-xs font-bold text-slate-700 group-hover:text-purple-900">
+              Click or drag to upload custom AOP pattern file (.jpg, .png, .tif)
+            </div>
+            <div class="text-[10px] text-slate-400">
+              Maximum file size: 25MB &bull; High-res RGB or CMYK reference swatch
+            </div>
+          </div>
+
+          <!-- Studio Case Presets -->
+          <div class="space-y-1.5">
+            <span class="text-[11px] font-semibold text-slate-500">Or quick-attach from Studio Case Library:</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                v-for="preset in studioPatternPresets"
+                :key="preset.name"
+                @click="selectPresetPattern(preset)"
+                type="button"
+                class="p-2.5 rounded-xl border border-slate-200 hover:border-purple-300 bg-white hover:bg-purple-50/40 text-left flex items-center gap-2.5 transition-all text-xs"
+              >
+                <div class="w-8 h-8 rounded bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                  <img :src="preset.url" :alt="preset.name" class="w-full h-full object-cover" />
+                </div>
+                <div class="flex flex-col flex-1 truncate">
+                  <span class="font-bold text-slate-800 truncate">{{ preset.name }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{ preset.filename }}</span>
+                </div>
+                <span class="text-[10px] font-bold text-purple-600 shrink-0">+ Attach</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Partner, Priority & Clipping Rules -->
+      <div class="space-y-4 pt-4 border-t border-slate-100">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">5. Partner Dispatch & Clipping Rules</h2>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <!-- Partner -->
           <div class="space-y-1.5">
@@ -338,7 +519,7 @@ async function handleSubmit(dispatchImmediately = false) {
       <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
         <button
           @click="handleSubmit(false)"
-          :disabled="isSubmitting"
+          :disabled="isSubmitting || isUploadingFile"
           type="button"
           class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-2xs"
         >
@@ -348,7 +529,7 @@ async function handleSubmit(dispatchImmediately = false) {
 
         <button
           @click="handleSubmit(true)"
-          :disabled="isSubmitting"
+          :disabled="isSubmitting || isUploadingFile"
           type="button"
           class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-sm"
         >

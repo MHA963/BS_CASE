@@ -64,6 +64,7 @@ const originalImageSrc = computed(() => {
 // Pattern reference file path (e.g. Block Libre.jpg / DOTS CLOUD DANCER.jpg)
 const patternReferenceSrc = computed(() => {
   if (!ticket.value || !ticket.value.patternAttachment) return null;
+  if (ticket.value.patternAttachment.url) return ticket.value.patternAttachment.url;
   return `/api/assets/recolour-case/${ticket.value.patternAttachment.ticketFolder || 'Ticket 1'}/${ticket.value.patternAttachment.filename}`;
 });
 
