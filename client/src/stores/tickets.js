@@ -186,7 +186,7 @@ export const useTicketStore = defineStore('tickets', () => {
   // Kanban column buckets
   const kanbanColumns = computed(() => {
     return {
-      draftPending: filteredTickets.value.filter(t => t.status === 'Draft' || t.status === 'Pending'),
+      draftPending: filteredTickets.value.filter(t => t.status === 'Draft' || t.status === 'Pending' || t.status === 'Rejected'),
       sent: filteredTickets.value.filter(t => t.status === 'Sent'),
       inProgress: filteredTickets.value.filter(t => t.status === 'In Progress'),
       awaitingReview: filteredTickets.value.filter(t => t.status === 'Awaiting Review'),

@@ -103,20 +103,36 @@ async function handleSimulateProgress() {
       </div>
     </div>
 
+    <!-- Rejection Alert / Revision Note if status is Rejected -->
+    <div
+      v-if="ticket.status === 'Rejected'"
+      class="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] space-y-1"
+    >
+      <div class="font-bold flex items-center gap-1 text-[10px] uppercase text-rose-700">
+        <span>⚠ QC Rejected — Rework Needed</span>
+      </div>
+      <p class="line-clamp-2 text-[10px] text-rose-600 font-mono">
+        {{ ticket.history?.slice(-1)[0]?.event || 'Returned with feedback for partner adjustment.' }}
+      </p>
+    </div>
+
     <!-- Actions & Footer -->
     <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
       <StatusBadge :status="ticket.status" />
 
       <div class="flex items-center gap-1.5">
-        <!-- Dispatch button for Draft/Pending -->
+        <!-- Dispatch / Re-dispatch button for Draft/Pending/Rejected -->
         <button
-          v-if="ticket.status === 'Pending' || ticket.status === 'Draft'"
+          v-if="ticket.status === 'Pending' || ticket.status === 'Draft' || ticket.status === 'Rejected'"
           @click="handleDispatch"
-          class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition-colors shadow-2xs"
-          title="Send to Partner"
+          :class="[
+            'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-white text-[11px] font-semibold transition-colors shadow-2xs',
+            ticket.status === 'Rejected' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-slate-900 hover:bg-slate-800'
+          ]"
+          :title="ticket.status === 'Rejected' ? 'Re-dispatch ticket to partner for rework' : 'Send to Partner'"
         >
           <Send class="w-3 h-3" />
-          <span>Dispatch</span>
+          <span>{{ ticket.status === 'Rejected' ? 'Re-dispatch' : 'Dispatch' }}</span>
         </button>
 
         <!-- Partner Simulator Fast-Forward Button -->

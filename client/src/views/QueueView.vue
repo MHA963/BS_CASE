@@ -138,7 +138,7 @@ const priorities = ['All', 'High', 'Medium', 'Low'];
         <div class="flex items-center justify-between px-1">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pending Dispatch</h3>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Pending Dispatch & Rework</h3>
           </div>
           <span class="text-xs font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full shadow-2xs">
             {{ ticketStore.kanbanColumns.draftPending.length }}

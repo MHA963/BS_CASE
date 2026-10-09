@@ -250,7 +250,38 @@ onMounted(async () => {
           </div>
 
           <div class="space-y-2">
-            <!-- 1. Open Tickets Waiting for Dispatch -->
+            <!-- 1. Urgent: Rejected Tickets Requiring Rework / Re-dispatch -->
+            <div
+              v-for="ticket in ticketStore.tickets.filter(t => t.status === 'Rejected')"
+              :key="ticket.id"
+              class="p-3 rounded-xl bg-rose-50/80 border border-rose-200 flex items-center justify-between gap-2"
+            >
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded bg-white border border-rose-300 overflow-hidden shrink-0">
+                  <img
+                    v-if="ticket.shots && ticket.shots[0]"
+                    :src="`/api/assets/recolour-case/${ticket.shots[0].ticketFolder || 'Ticket 1'}/${ticket.shots[0].filename}`"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-rose-900">#{{ ticket.styleNumber }} ({{ ticket.brand }})</span>
+                    <span class="text-[9px] font-bold uppercase bg-rose-200 text-rose-800 px-1.5 py-0.2 rounded">Rework</span>
+                  </div>
+                  <span class="text-[10px] text-rose-700 font-medium">QC Rejected — Click to re-dispatch revision</span>
+                </div>
+              </div>
+
+              <button
+                @click="ticketStore.dispatchTicket(ticket.id)"
+                class="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold shadow-2xs transition-colors shrink-0"
+              >
+                Re-dispatch
+              </button>
+            </div>
+
+            <!-- 2. Open Tickets Waiting for Dispatch -->
             <div
               v-for="ticket in ticketStore.tickets.filter(t => t.status === 'Pending' || t.status === 'Draft')"
               :key="ticket.id"
