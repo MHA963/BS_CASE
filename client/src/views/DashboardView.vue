@@ -190,14 +190,14 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Quick QC Action & Partner Distribution -->
+      <!-- Quick Action Cards (Role Aware) -->
       <div class="space-y-6">
-        <!-- Urgent Action Card -->
-        <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+        <!-- MANAGER VIEW: Urgent QC Approval Action Card -->
+        <div v-if="authStore.isManager" class="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Sparkles class="w-4 h-4 text-amber-500" />
-              Priority QC Items
+              Priority QC Items (Manager Sign-Off)
             </h2>
             <router-link to="/queue" class="text-xs text-indigo-600 hover:underline font-medium">All</router-link>
           </div>
@@ -228,6 +228,86 @@ onMounted(async () => {
               >
                 Inspect
               </router-link>
+            </div>
+
+            <div
+              v-if="ticketStore.tickets.filter(t => t.status === 'Awaiting Review').length === 0"
+              class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl"
+            >
+              🎉 QC Queue clear! No tickets currently awaiting sign-off.
+            </div>
+          </div>
+        </div>
+
+        <!-- OPERATOR VIEW: Open Tickets & Pending Dispatch Action Card -->
+        <div v-else class="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Layers class="w-4 h-4 text-indigo-500" />
+              Operator Action Items
+            </h2>
+            <router-link to="/queue" class="text-xs text-indigo-600 hover:underline font-medium">View All</router-link>
+          </div>
+
+          <div class="space-y-2">
+            <!-- 1. Open Tickets Waiting for Dispatch -->
+            <div
+              v-for="ticket in ticketStore.tickets.filter(t => t.status === 'Pending' || t.status === 'Draft')"
+              :key="ticket.id"
+              class="p-3 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center justify-between gap-2"
+            >
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded bg-white border border-blue-200 overflow-hidden shrink-0">
+                  <img
+                    v-if="ticket.shots && ticket.shots[0]"
+                    :src="`/api/assets/recolour-case/${ticket.shots[0].ticketFolder || 'Ticket 1'}/${ticket.shots[0].filename}`"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold text-slate-900">#{{ ticket.styleNumber }} ({{ ticket.brand }})</span>
+                  <span class="text-[10px] text-blue-700 font-medium">Ready to dispatch to {{ ticket.partner }}</span>
+                </div>
+              </div>
+
+              <button
+                @click="ticketStore.dispatchTicket(ticket.id)"
+                class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold shadow-2xs transition-colors shrink-0"
+              >
+                Dispatch
+              </button>
+            </div>
+
+            <!-- 2. Tickets Awaiting Manager QC -->
+            <div
+              v-for="ticket in ticketStore.tickets.filter(t => t.status === 'Awaiting Review')"
+              :key="ticket.id"
+              class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2"
+            >
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded bg-white border border-slate-200 overflow-hidden shrink-0">
+                  <img
+                    v-if="ticket.shots && ticket.shots[0]"
+                    :src="`/api/assets/recolour-case/${ticket.shots[0].ticketFolder || 'Ticket 1'}/${ticket.shots[0].filename}`"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-xs font-bold text-slate-900">#{{ ticket.styleNumber }} ({{ ticket.brand }})</span>
+                  <span class="text-[10px] text-slate-500 font-medium">Delivered by {{ ticket.partner }}</span>
+                </div>
+              </div>
+
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                Awaiting Manager QC
+              </span>
+            </div>
+
+            <div
+              v-if="ticketStore.tickets.filter(t => t.status === 'Pending' || t.status === 'Draft' || t.status === 'Awaiting Review').length === 0"
+              class="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl"
+            >
+              All orders are currently in progress or completed.
             </div>
           </div>
         </div>
